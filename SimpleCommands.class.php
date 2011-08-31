@@ -120,62 +120,90 @@ class SimpleCommands {
 		$currentParam = 0;
 		$comma = 0;
 		
+		//Goes through each character
 		for ($pass = 0; $pass<count($paramsString); $pass++){
 			$char = $paramsString[$pass];
+			//Checks if this char is the first of the parameter
 			if ($type === 0){
+				//Ignores spaces...
 				if ($char != ' '){
+					//Maybe it's an number
 					if (in_array($char, $integersSimbols)){
-						$type = 'integer';
-						$separedParams[$currentParam]['type'] = 'integer';
+						$type = 'number';
+						$separedParams[$currentParam]['type'] = 'number';
 						$separedParams[$currentParam]['value'] = $char;
+					//Or maybe it's a complex string (delimited by quotation marks [ "" ])
 					} elseif ($char == '"'){
 						$type = 'string2';
 						$separedParams[$currentParam]['type'] = 'string';
+					//Or it is a simple string (can't contain spaces)
 					} else {
 						$type = 'string';
 						$separedParams[$currentParam]['type'] = 'string';
 						$separedParams[$currentParam]['value'] = $char;
 					}
 				}
+			//The current char is in the middle of a parameter
 			} else {
+				//If it's a space in an number or simple string, then the parameter finishes.
 				if ($type != 'string2' and $char == ' '){
-					if ($separedParams[$currentParam]['type'] === 'integer'){
-						$separedParams[$currentParam]['value'] = (integer)$separedParams[$currentParam]['value'];
+					//Parses the string to a PHP integer or float
+					if ($separedParams[$currentParam]['type'] === 'number'){
+						if ($comma == 1){
+							$separedParams[$currentParam]['type'] === 'float';
+							$separedParams[$currentParam]['value'] = (float)$separedParams[$currentParam]['value'];
+						} else {
+							$separedParams[$currentParam]['type'] === 'integer';
+							$separedParams[$currentParam]['value'] = (integer)$separedParams[$currentParam]['value'];
+						}
+						$comma = 0;
 					}
 					$type = 0;
 					$currentParam++;
-				} elseif ($type === 'integer'){
-					if (in_array($char, $integersSimbols)){
-						$separedParams[$currentParam]['value'] .= $char;
-					} elseif($char == '.'){
+				//The current param is a number
+				} elseif ($type === 'number'){
+					//Yes, numbers can contain decimal cases
+					if($char == '.'){
 						if ($comma == 0){
 							$comma = 1;
+						//More than one point makes the current param a string
 						} else {
 							$type = 'string';
+							$separedParams[$currentParam]['type'] === 'string';
 						}
-					} else {
+					//And any strange character makes it a string too
+					} elseif (!in_array($char, $integersSimbols)) {
 						$type = 'string';
+						$separedParams[$currentParam]['type'] === 'string';
 					}
 					$separedParams[$currentParam]['value'] .= $char;
+				//Or the current param is a simple string
 				} elseif ($type === 'string'){
 					$separedParams[$currentParam]['value'] .= $char;
+				//Or a complex one
 				} elseif ($type === 'string2'){
+					//if current char is a backslash, escapes the next char
+					//The backslash is taken out of the string
 					if ($char == '\\'){
 						$separedParams[$currentParam]['value'] .= $paramsString[$pass+1];
 						$pass++;
+					//If it's a quotation mark, and was not escaped by any backslash, so it's the end of the string
 					} elseif ($char == '"'){
 						$currentParam++;
 						$type = 0;
+					//Or, it's just another char to add to the string
 					} else {
 						$separedParams[$currentParam]['value'] .= $char;
 					}
 				}
 			}
 		}
-
+		
+		//The command end's lefting a complex string open, the the parse fails
 		if ($type === 'string2'){
 			return(false);
 		}
+		
 		return($separedParams);
 	}
 	
