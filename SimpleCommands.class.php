@@ -110,7 +110,6 @@ class SimpleCommands {
 		}
 		
 		$integersSimbols = Array('-', '+', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
-		$stringSimbols = Array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'x', 'z', 'y', 'w', 'k');
 		
 		$paramsString = trim($paramsString);
 		$paramsString = str_split($paramsString, 1);
@@ -129,14 +128,13 @@ class SimpleCommands {
 						$type = 'integer';
 						$separedParams[$currentParam]['type'] = 'integer';
 						$separedParams[$currentParam]['value'] = $char;
-					} elseif (in_array(strtolower($char), $stringSimbols)){
-						$type = 'string';
-						$separedParams[$currentParam]['type'] = 'string';
-						$separedParams[$currentParam]['value'] = $char;
-						
 					} elseif ($char == '"'){
 						$type = 'string2';
 						$separedParams[$currentParam]['type'] = 'string';
+					} else {
+						$type = 'string';
+						$separedParams[$currentParam]['type'] = 'string';
+						$separedParams[$currentParam]['value'] = $char;
 					}
 				}
 			} else {
@@ -153,18 +151,14 @@ class SimpleCommands {
 						if ($comma == 0){
 							$comma = 1;
 						} else {
-							return(false);
+							$type = 'string';
 						}
-						$separedParams[$currentParam]['value'] .= $char;
 					} else {
-						return(false);
+						$type = 'string';
 					}
+					$separedParams[$currentParam]['value'] .= $char;
 				} elseif ($type === 'string'){
-					if (in_array($char, $stringSimbols)){
-						$separedParams[$currentParam]['value'] .= $char;
-					} else {
-						return(false);
-					}
+					$separedParams[$currentParam]['value'] .= $char;
 				} elseif ($type === 'string2'){
 					if ($char == '\\'){
 						$separedParams[$currentParam]['value'] .= $paramsString[$pass+1];
