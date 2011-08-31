@@ -1,5 +1,53 @@
 <?php
 
+/*
+ 
+#    This program is free software; you can redistribute it and/or
+ 
+#    modify it under the terms of the GNU General Public License
+ 
+#    as published by the Free Software Foundation; either version 2
+ 
+#    of the License, or (at your option) any later version.
+ 
+#
+ 
+#    This program is distributed in the hope that it will be useful,
+ 
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ 
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ 
+#    GNU General Public License for more details.
+ 
+#    http://www.gnu.org/licenses/gpl.txt
+ 
+#
+ 
+*/
+ 
+ 
+ 
+ /******
+ 
+ *
+ 
+ * SimpleCommands - library to parse commands from strings in PHP.
+ 
+ * 
+ 
+ * @author	Scorch (aka Scorchpt or Scorchsw)
+ 
+ * @access	public
+ 
+ * @version	Alpha 0.1
+ 
+ * @link	http://scorch.isgreat.org/
+ 
+ *
+ 
+ ******/
+
 require('Command.class.php');
 
 class SimpleCommands {
@@ -18,6 +66,12 @@ class SimpleCommands {
 		return($this->commandsFolder);
 	}
 	
+	/*
+	* Checks if the given string is a valid command name
+	*	
+	* @param string commandName - The command name to check the validity
+	* @return boolean - True in case the command name is valid, false if not
+	*/
 	public function validateCommandName($commandName){
 		if (preg_match('/^([0-9a-zA-Z])*$/', $commandName) == 1){
 			return(true);
@@ -26,6 +80,12 @@ class SimpleCommands {
 		}
 	}
 	
+	/*
+	* This function validates a command to check if it meets the requirements
+	*
+	* @param string command - The input string to check
+	* @return boolean - Returns true in case the command is valid, false in case the command is invalid
+	*/
 	public function validateCommand($command){
 		$command = trim($command);
 		
@@ -42,6 +102,16 @@ class SimpleCommands {
 		}
 	}
 	
+	/*
+	* This function checks if the given command has already been loaded.
+	* The commands classes are stored under the folder $this->commandsFolder and their name must be:
+	* $commandName.command.php
+	* They also must extend the class Command, defined in the file Command.class.php
+	*
+	* @param string commandName - The name of the command to check
+	* @return true - In case the given command was already loaded
+	* @return false - In case the given command was not loaded yet or the command name is not valid
+	*/
 	public function commandLoaded($commandName){
 		if ($this->validateCommandName($commandName)){
 			return(false);
@@ -53,10 +123,14 @@ class SimpleCommands {
 		}
 	}
 	
-	private function &getReference(&$var){
-		return $var;
-	}
-	
+	/*
+	* This functions loads the given command into the memory
+	* 
+	* @param string commandName - the name of the command to be loaded into the memory
+	* @return boolean false - In case the command doesn't exists, the class isn't defined
+	* @return boolean false - In case the class is not defined in the proper file OR do not extends the class Commands
+	* @return boolean true - In case the command was successfully loaded OR was already loaded
+	*/
 	public function loadCommand($commandName){
 		if (!$this->commandExists($commandName)){
 			return(false);
@@ -93,6 +167,13 @@ class SimpleCommands {
 		return(true);
 	}
 	
+	/*
+	* This function checks if the given command exists
+	*
+	* @param string commandName - The name of the command to check
+	* @return boolean false - In case the given command name is not valid or the file not exists
+	* @return boolean true - In case the file exists. NOTE that this doesn't explicitly means the class is properly defined.
+	*/
 	public function commandExists($commandName){
 		if ($this->validateCommandName($commandName) == false){
 			return(false);
@@ -104,6 +185,18 @@ class SimpleCommands {
 		}
 	}
 	
+	/*
+	* This functions get's a string containing the params and split's them into an array, specifying each parameter type
+	*
+	* Each row of the returning array has the following structure:
+	* ['type'] => 'integer'||'float'||'string'
+	* ['value'] => The parameter value
+	*
+	* @param string paramsString - The string containing the parameters set to split
+	* @return boolean false - In case the given parameter isn't a string
+	* @return boolean false - In case it occurs a parse error
+	* @return array $separedParams - If the params are successfully divided.
+	*/
 	private function splitParams($paramsString){
 		if (!is_string($paramsString)){
 			return(false);
@@ -207,6 +300,14 @@ class SimpleCommands {
 		return($separedParams);
 	}
 	
+	/*
+	* This function parses the given command, splitting it's name and params
+	* Note that this function doesn't not executes something, instead, use the function executeCommand()
+	* 
+	* @param string command - The command to parse.
+	* @return boolean false - In case the command has any syntax error
+	* @return array $commandParts - Returns an array with the command name, and a sub-array with the params (each row -> each value)
+	*/
 	public function parseCommand($command){
 		$command = trim($command);
 		if ($this->validateCommand($command) == false){
@@ -230,24 +331,33 @@ class SimpleCommands {
 		return($commandParts);
 	}
 	
+	/*
+	* This function parses the given command, and in case of success, executes it.
+	* 
+	* @param string command - The command to be executed
+	* @return boolean false - In case it occurs any parsing error (see parseCommand() )
+	* @return boolean false - In case the command instance doesn't exists
+	* @return string $output - Returns the returned output by the command execution
+	*/
 	public function executeCommand($command){
 		$commandParts = $this->parseCommand($command);
 		if ($commandParts === false){
 			return(false);
 		}
 		
-		$commandInstance = &$this->loadCommand($commandParts['name']);
+		$commandInstance = $this->loadCommand($commandParts['name']);
 		
 		if ($commandInstance === false){
 			return(false);
 		}
 		
 		$commandInstance = &$this->commandsInstances[$commandParts['name']];
-		//if (isset())
-		$return = call_user_func_array(array(&$commandInstance, 'execute'), $commandParts['params']);
 		
-		return($return);
+		$output = call_user_func_array(array(&$commandInstance, 'execute'), $commandParts['params']);
+		
+		return($output);
 	}
+	
 	
 	public function __construct($commandsFolder){
 		$this->regexMatch = '@^/([0-9a-zA-Z]*)((?:(?: )+(?:"[^"\\\r\n]*(?:\\.[^"\\\r\n]*)*"|[+-](?:(?:\b[0-9]+)?\.)?[0-9]+\b|[0-9a-zA-Z])+)+)?$@';
