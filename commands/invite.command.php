@@ -1,0 +1,1 @@
+<?phpclass invite_command extends Command {		public function execute($userID, $username){		return('Função executada com sussesso.'.$userID.'\\'.$username);	}		}?>
