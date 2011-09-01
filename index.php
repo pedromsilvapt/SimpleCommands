@@ -4,7 +4,7 @@ session_start();
 include('SimpleCommands.class.php');
 
 
-$simpleConsole = new SimpleCommands('C:\wamp\www\SimpleCommands\commands');
+$simpleConsole = new SimpleCommands('C:\wamp\www\SimpleCommands\SimpleCommands.git\commands');
 if (isset($_POST['btn_executar'])){
 	if (!empty($_POST['txt_console'])){
 		if ($simpleConsole->validateCommand($_POST['txt_console']) == true){
