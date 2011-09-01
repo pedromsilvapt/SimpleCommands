@@ -1,1 +1,1 @@
-<?phpclass invite_command extends Command {		public function execute($userID, $username){		return('Função executada com sussesso.'.$userID.'\\'.$username);	}		}?>
+<?phpclass invite_command extends Command {		public function execute($userID, $username){		return('Função executada com sussesso.'.$userID.'\\'.$username);	}		public function getHelp(){		return('This is a test command. Call it whenever you want.');	}	}?>
