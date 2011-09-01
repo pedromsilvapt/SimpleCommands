@@ -55,8 +55,8 @@ class SimpleCommands {
 	private $regexMatch;
 	private $commandsFolder;
 	private $commandsInstances;
-	private $false;
-	private $true;
+	
+	private $autoHelp;
 	
 	public function getRegExMatch(){
 		return($this->regexMatch);
@@ -345,22 +345,43 @@ class SimpleCommands {
 			return(false);
 		}
 		
-		$commandInstance = $this->loadCommand($commandParts['name']);
+		if ($this->autoHelp == true and $commandParts['name'] == 'help'){
+			$commandInstance = $this->loadCommand($commandParts['params'][0]);
+			
+			if ($commandInstance === false){
+				return(false);
+			}
 		
-		if ($commandInstance === false){
-			return(false);
+			$commandInstance = &$this->commandsInstances[$commandParts['params'][0]];
+			
+			
+			if (method_exists($commandInstance, 'getHelp')){
+			
+				$output = 'Help for '.$commandParts['params'][0].': '.call_user_func(array(&$commandInstance, 'getHelp'));
+			} else {
+				$output = 'The command doesn\'t provides any help.';
+			}			
+		} else {
+			$commandInstance = $this->loadCommand($commandParts['name']);
+
+			if ($commandInstance === false){
+				return(false);
+			}
+
+			$commandInstance = &$this->commandsInstances[$commandParts['name']];
+
+			$output = call_user_func_array(array(&$commandInstance, 'execute'), $commandParts['params']);
 		}
-		
-		$commandInstance = &$this->commandsInstances[$commandParts['name']];
-		
-		$output = call_user_func_array(array(&$commandInstance, 'execute'), $commandParts['params']);
 		
 		return($output);
 	}
 	
 	
-	public function __construct($commandsFolder){
+	public function __construct($commandsFolder, $autoHelp = true){
+		
 		$this->regexMatch = '@^/([0-9a-zA-Z]*)((?:(?: )+(?:"[^"\\\r\n]*(?:\\.[^"\\\r\n]*)*"|[+-](?:(?:\b[0-9]+)?\.)?[0-9]+\b|[0-9a-zA-Z])+)+)?$@';
+		$this->autoHelp = (boolean)$autoHelp;
+		
 		if (file_exists($commandsFolder) and is_dir($commandsFolder)){
 			$this->commandsFolder = $commandsFolder;
 		}
